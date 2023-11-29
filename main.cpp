@@ -1,165 +1,145 @@
+
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include <queue>
+#include <stack>
 #include <set>
+#include <sstream>
 #include <algorithm>
+
+using namespace std;
+
 // Data structure to represent a move
 struct Move {
     int spaces;
-    std::string direction;
+    string direction;
 };
 
 // Function to construct the graph from the maze
-std::vector<std::vector<std::pair<int, std::string>>> constructGraph(const std::vector<std::vector<std::string>>& maze) {
+vector<vector<pair<int, string>>> constructGraph(const vector<vector<string>>& maze) {
     int rows = maze.size();
     int cols = maze[0].size();
 
-    std::vector<std::vector<std::pair<int, std::string>>> graph(rows, std::vector<std::pair<int, std::string>>(cols));
+    vector<vector<pair<int, string>>> graph(rows, vector<pair<int, string>>(cols));
 
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
             // Extract spaces and direction from the maze cell
             int spaces;
-            std::string direction;
-            sscanf(maze[i][j].c_str(), "%d%s", &spaces, &direction[0]);
+            string direction;
+
+            // Using stringstream for string parsing
+            stringstream ss(maze[i][j]);
+            ss >> spaces >> direction;
 
             // Add the edge to the graph
-            graph[i][j] = std::make_pair(spaces, direction);
+            graph[i][j] = make_pair(spaces, direction);
         }
     }
 
     return graph;
 }
 
-// Function to find the path using BFS
-std::vector<Move> findPath(const std::vector<std::vector<std::pair<int, std::string>>>& graph) {
+// Function to find the path using DFS
+bool findPathDFS(
+    const vector<vector<pair<int, string>>>& graph,
+    int currentRow,
+    int currentCol,
+    int endRow,
+    int endCol,
+    set<pair<int, int>>& visited,
+    vector<Move>& path
+) {
+    if (currentRow < 0 || currentRow >= graph.size() || currentCol < 0 || currentCol >= graph[0].size()) {
+        return false;  // Out of bounds
+    }
+
+    if (currentRow == endRow && currentCol == endCol) {
+        return true;  // Destination reached
+    }
+
+    if (visited.count({currentRow, currentCol}) > 0) {
+        return false;  // Already visited
+    }
+
+    visited.insert({currentRow, currentCol});
+
+    int spaces = graph[currentRow][currentCol].first;
+    string direction = graph[currentRow][currentCol].second;
+
+    path.push_back({spaces, direction});
+
+    // Try moving in the chosen direction
+    if (direction == "R") {
+        if (findPathDFS(graph, currentRow, currentCol + spaces, endRow, endCol, visited, path)) {
+            return true;
+        }
+    } else if (direction == "B") {
+        if (findPathDFS(graph, currentRow + spaces, currentCol, endRow, endCol, visited, path)) {
+            return true;
+        }
+    } else if (direction == "NE") {
+        if (findPathDFS(graph, currentRow + spaces, currentCol + spaces, endRow, endCol, visited, path)) {
+            return true;
+        }
+    } else if (direction == "SE") {
+        if (findPathDFS(graph, currentRow - spaces, currentCol + spaces, endRow, endCol, visited, path)) {
+            return true;
+        }
+    } else if (direction == "SW") {
+        if (findPathDFS(graph, currentRow - spaces, currentCol - spaces, endRow, endCol, visited, path)) {
+            return true;
+        }
+    } else if (direction == "NW") {
+        if (findPathDFS(graph, currentRow + spaces, currentCol - spaces, endRow, endCol, visited, path)) {
+            return true;
+        }
+    }
+
+    // If no path is found in the chosen direction, backtrack
+    path.pop_back();
+    visited.erase({currentRow, currentCol});
+
+    return false;
+}
+
+vector<Move> findPathDFSWrapper(const vector<vector<pair<int, string>>>& graph) {
     int rows = graph.size();
     int cols = graph[0].size();
 
-    std::vector<Move> path;
+    set<pair<int, int>> visited;
+    vector<Move> path;
 
-    // Starting point
-    std::pair<int, int> start = std::make_pair(0, 0);
-
-    // Bull's-eye
-    std::pair<int, int> end = std::make_pair(rows - 1, cols - 1);
-
-    // Initialize BFS
-    std::queue<std::pair<int, int>> bfsQueue;
-    std::set<std::pair<int, int>> visited;
-    bfsQueue.push(start);
-    visited.insert(start);
-
-    while (!bfsQueue.empty()) {
-        std::pair<int, int> currentVertex = bfsQueue.front();
-        bfsQueue.pop();
-
-        // Check if the current vertex is the destination
-        if (currentVertex == end) {
-            // Reconstruct the path
-            while (currentVertex != start) {
-                // Extract the direction and spaces from the graph
-                int spaces = graph[currentVertex.first][currentVertex.second].first;
-                std::string direction = graph[currentVertex.first][currentVertex.second].second;
-
-                // Add the move to the path
-                path.push_back({spaces, direction});
-
-                // Move to the previous vertex
-                if (direction == "N") currentVertex.first += spaces;
-                else if (direction == "S") currentVertex.first -= spaces;
-                else if (direction == "E") currentVertex.second += spaces;
-                else if (direction == "W") currentVertex.second -= spaces;
-                else if (direction == "NE") { currentVertex.first += spaces; currentVertex.second += spaces; }
-                else if (direction == "SE") { currentVertex.first -= spaces; currentVertex.second += spaces; }
-                else if (direction == "SW") { currentVertex.first -= spaces; currentVertex.second -= spaces; }
-                else if (direction == "NW") { currentVertex.first += spaces; currentVertex.second -= spaces; }
-            }
-
-            // Reverse the path to get it in the correct order
-            std::reverse(path.begin(), path.end());
-            
-            return path;
-        }
-
-        // Explore neighbors
-        int currentRow = currentVertex.first;
-        int currentCol = currentVertex.second;
-        int spaces = graph[currentRow][currentCol].first;
-
-        if (graph[currentRow][currentCol].second == "R") {
-            // Move to the right
-            int newCol = currentCol + spaces;
-            if (newCol < cols && visited.find({currentRow, newCol}) == visited.end()) {
-                bfsQueue.push({currentRow, newCol});
-                visited.insert({currentRow, newCol});
-            }
-        } else if (graph[currentRow][currentCol].second == "B") {
-            // Move down
-            int newRow = currentRow + spaces;
-            if (newRow < rows && visited.find({newRow, currentCol}) == visited.end()) {
-                bfsQueue.push({newRow, currentCol});
-                visited.insert({newRow, currentCol});
-            }
-        }
-            else if (graph[currentRow][currentCol].second == "NE") {
-                // Move to the northeast
-                int newRow = currentRow + spaces;
-                int newCol = currentCol + spaces;
-                if (newRow < rows && newCol < cols && visited.find({newRow, newCol}) == visited.end()) {
-                    bfsQueue.push({newRow, newCol});
-                    visited.insert({newRow, newCol});
-                }
-            } else if (graph[currentRow][currentCol].second == "SE") {
-                // Move to the southeast
-                int newRow = currentRow - spaces;
-                int newCol = currentCol + spaces;
-                if (newRow >= 0 && newCol < cols && visited.find({newRow, newCol}) == visited.end()) {
-                    bfsQueue.push({newRow, newCol});
-                    visited.insert({newRow, newCol});
-                }
-            } else if (graph[currentRow][currentCol].second == "SW") {
-                // Move to the southwest
-                int newRow = currentRow - spaces;
-                int newCol = currentCol - spaces;
-                if (newRow >= 0 && newCol >= 0 && visited.find({newRow, newCol}) == visited.end()) {
-                    bfsQueue.push({newRow, newCol});
-                    visited.insert({newRow, newCol});
-                }
-            } else if (graph[currentRow][currentCol].second == "NW") {
-                // Move to the northwest
-                int newRow = currentRow + spaces;
-                int newCol = currentCol - spaces;
-                if (newRow < rows && newCol >= 0 && visited.find({newRow, newCol}) == visited.end()) {
-                    bfsQueue.push({newRow, newCol});
-                    visited.insert({newRow, newCol});
-                }
-}
-
+    if (findPathDFS(graph, 0, 0, rows - 1, cols - 1, visited, path)) {
+        // Reverse the path to get it in the correct order
+        reverse(path.begin(), path.end());
+        return path;
+    } else {
+        cerr << "No path found\n";
+        return vector<Move>();  // Return an empty path to indicate failure
     }
-
-    // If the loop completes, no path is found
-    std::cerr << "No path found\n";
-    return path;
 }
 
 int main() {
-    std::ifstream inputFile("input.txt");
+    ifstream inputFile("input.txt");
     int rows, cols;
     inputFile >> rows >> cols;
 
-    std::vector<std::vector<std::string>> maze(rows, std::vector<std::string>(cols));
+    vector<vector<string>> maze(rows, vector<string>(cols));
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
             inputFile >> maze[i][j];
         }
     }
 
-    std::vector<std::vector<std::pair<int, std::string>>> graph = constructGraph(maze);
-    std::vector<Move> path = findPath(graph);
+    vector<vector<pair<int, string>>> graph = constructGraph(maze);
+    vector<Move> path = findPathDFSWrapper(graph);
 
-    std::ofstream outputFile("output.txt");
+    if (path.empty()) {
+        return 1;  // Return an error code to indicate failure
+    }
+
+    ofstream outputFile("output.txt");
     for (const auto& move : path) {
         outputFile << move.spaces << move.direction << " ";
     }
