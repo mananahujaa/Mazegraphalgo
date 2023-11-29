@@ -5,6 +5,7 @@
 #include <stack>
 #include <set>
 #include <sstream>
+#include <fstream>
 #include <algorithm>
 
 using namespace std;
@@ -16,11 +17,11 @@ struct Move {
 };
 
 // Function to construct the graph from the maze
-vector<vector<pair<int, string>>> constructGraph(const vector<vector<string>>& maze) {
+vector<vector<pair<int, string> > > constructGraph(const vector<vector<string> > & maze) {
     int rows = maze.size();
     int cols = maze[0].size();
 
-    vector<vector<pair<int, string>>> graph(rows, vector<pair<int, string>>(cols));
+    vector<vector<pair<int, string > > > graph(rows, vector<pair<int, string> >(cols));
 
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
@@ -42,12 +43,12 @@ vector<vector<pair<int, string>>> constructGraph(const vector<vector<string>>& m
 
 // Function to find the path using DFS
 bool findPathDFS(
-    const vector<vector<pair<int, string>>>& graph,
+    const vector<vector<pair<int, string> > >& graph,
     int currentRow,
     int currentCol,
     int endRow,
     int endCol,
-    set<pair<int, int>>& visited,
+    set<pair<int, int> >& visited,
     vector<Move>& path
 ) {
     if (currentRow < 0 || currentRow >= graph.size() || currentCol < 0 || currentCol >= graph[0].size()) {
@@ -59,13 +60,14 @@ bool findPathDFS(
     }
 
     if (visited.count({currentRow, currentCol}) > 0) {
-        return false;  // Already visited
+        return false; // Already visited
     }
 
     visited.insert({currentRow, currentCol});
 
     int spaces = graph[currentRow][currentCol].first;
     string direction = graph[currentRow][currentCol].second;
+
 
     path.push_back({spaces, direction});
 
@@ -103,11 +105,11 @@ bool findPathDFS(
     return false;
 }
 
-vector<Move> findPathDFSWrapper(const vector<vector<pair<int, string>>>& graph) {
+vector<Move> findPathDFSWrapper(const vector<vector<pair<int, string> > >& graph) {
     int rows = graph.size();
     int cols = graph[0].size();
 
-    set<pair<int, int>> visited;
+    set<pair<int, int> > visited;
     vector<Move> path;
 
     if (findPathDFS(graph, 0, 0, rows - 1, cols - 1, visited, path)) {
@@ -125,14 +127,14 @@ int main() {
     int rows, cols;
     inputFile >> rows >> cols;
 
-    vector<vector<string>> maze(rows, vector<string>(cols));
+    vector<vector<string> > maze(rows, vector<string>(cols));
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
             inputFile >> maze[i][j];
         }
     }
 
-    vector<vector<pair<int, string>>> graph = constructGraph(maze);
+    vector<vector<pair<int, string > > > graph = constructGraph(maze);
     vector<Move> path = findPathDFSWrapper(graph);
 
     if (path.empty()) {
