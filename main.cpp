@@ -1,12 +1,12 @@
-
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <stack>
 #include <set>
 #include <sstream>
-#include <fstream>
 #include <algorithm>
+#include <vector>
+#include <memory>
 
 using namespace std;
 
@@ -43,13 +43,13 @@ vector<vector<pair<int, string> > > constructGraph(const vector<vector<string> >
 
 // Function to find the path using DFS
 bool findPathDFS(
-    const vector<vector<pair<int, string> > >& graph,
+    const vector<vector<pair<int, string> > > &graph,
     int currentRow,
     int currentCol,
     int endRow,
     int endCol,
-    set<pair<int, int> >& visited,
-    vector<Move>& path
+    set<pair<int, int> > &visited,
+    vector<Move> &path
 ) {
     if (currentRow < 0 || currentRow >= graph.size() || currentCol < 0 || currentCol >= graph[0].size()) {
         return false;  // Out of bounds
@@ -121,28 +121,78 @@ vector<Move> findPathDFSWrapper(const vector<vector<pair<int, string> > >& graph
         return vector<Move>();  // Return an empty path to indicate failure
     }
 }
+class VectorGuard {
+public:
+    explicit VectorGuard(std::vector<int> &vector) : vector_(vector) {}
+    ~VectorGuard() {}
+
+    std::vector<int> &vector() { return vector_; }
+
+private:
+    std::vector<int> &vector_;
+};
+
 
 int main() {
-    ifstream inputFile("input.txt");
+    // Create an empty vector
+    std::vector<int> myVector;
+
+    // Use unique_ptr to manage the VectorGuard
+    std::unique_ptr<VectorGuard> vectorGuard(new VectorGuard(myVector));
+
+    // Read maze from file
+    ifstream inputFile("tiny.txt");
     int rows, cols;
     inputFile >> rows >> cols;
 
-    vector<vector<string> > maze(rows, vector<string>(cols));
+    // Create and fill maze vector
+    vector<vector<string>> maze(rows, vector<string>(cols));
     for (int i = 0; i < rows; ++i) {
         for (int j = 0; j < cols; ++j) {
             inputFile >> maze[i][j];
         }
     }
 
-    vector<vector<pair<int, string > > > graph = constructGraph(maze);
+    // Print the maze
+    cout << "Maze:" << endl;
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            cout << maze[i][j] << " ";
+        }
+        cout << endl;
+    }
+    // Print the maze values
+    cout<< "maze Values:" <<endl;
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            cout << maze[i][j] << " ";
+        }
+        cout << endl;
+    }
+
+    // Construct graph from maze
+    vector<vector<pair<int, string>>> graph = constructGraph(maze);
+
+    // Print the graph
+    cout << "Graph:" << endl;
+    for (int i = 0; i < rows; ++i) {
+        for (int j = 0; j < cols; ++j) {
+            cout << "(" << graph[i][j].first << "," << graph[i][j].second << ") ";
+        }
+        cout << endl;
+    }
+
+    // Find path using DFS
     vector<Move> path = findPathDFSWrapper(graph);
 
     if (path.empty()) {
-        return 1;  // Return an error code to indicate failure
+        cerr << "No path found" << endl;
+        return 1; // Return error code for failure
     }
 
+    // Write path to output file
     ofstream outputFile("output.txt");
-    for (const auto& move : path) {
+    for (const auto &move : path) {
         outputFile << move.spaces << move.direction << " ";
     }
 
