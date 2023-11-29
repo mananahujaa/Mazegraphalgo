@@ -88,54 +88,49 @@ bool findPathDFS(
     // Check if the current position has already been visited
     pair<int, int> currentPosition = {currentRow, currentCol};
     if (visited.count(currentPosition) > 0) {
-        // Position has already been visited, but only mark it as visited if it was discovered during forward exploration
-        if (path.size() == 0) {
-            cerr << "Nowhere\n";
-            return false;  // Nowhere to backtrack
-        }
-
-        // Position has already been visited during forward exploration, continue backtracking
-    } else {
-        visited.insert(currentPosition);  // Add the current position to visited
+        return false;  // Already visited
     }
+
+    visited.insert(currentPosition);  // Add the current position to visited
 
     int spaces = graph[currentRow][currentCol].first;
     string direction = graph[currentRow][currentCol].second;
 
-    path.push_back({spaces, direction});
-
-    cout << "Current Position: (" << currentRow << ", " << currentCol << "), Spaces: " << spaces << ", Direction: " << direction << endl;
-
     // Try moving in the chosen direction
     if (direction == "R") {
         if (findPathDFS(graph, currentRow, currentCol + spaces, endRow, endCol, visited, path)) {
+            path.push_back({spaces, direction});
             return true;
         }
     } else if (direction == "B") {
         if (findPathDFS(graph, currentRow + spaces, currentCol, endRow, endCol, visited, path)) {
+            path.push_back({spaces, direction});
             return true;
         }
     } else if (direction == "NE") {
-        if (findPathDFS(graph, currentRow + spaces, currentCol + spaces, endRow, endCol, visited, path)) {
+        if (findPathDFS(graph, currentRow - spaces, currentCol + spaces, endRow, endCol, visited, path)) {
+            path.push_back({spaces, direction});
             return true;
         }
     } else if (direction == "SE") {
-        if (findPathDFS(graph, currentRow - spaces, currentCol + spaces, endRow, endCol, visited, path)) {
+        if (findPathDFS(graph, currentRow + spaces, currentCol + spaces, endRow, endCol, visited, path)) {
+            path.push_back({spaces, direction});
             return true;
         }
     } else if (direction == "SW") {
-        if (findPathDFS(graph, currentRow - spaces, currentCol - spaces, endRow, endCol, visited, path)) {
+        if (findPathDFS(graph, currentRow + spaces, currentCol - spaces, endRow, endCol, visited, path)) {
+            path.push_back({spaces, direction});
             return true;
         }
     } else if (direction == "NW") {
-        if (findPathDFS(graph, currentRow + spaces, currentCol - spaces, endRow, endCol, visited, path)) {
+        if (findPathDFS(graph, currentRow - spaces, currentCol - spaces, endRow, endCol, visited, path)) {
+            path.push_back({spaces, direction});
             return true;
         }
     }
 
     // If no path is found in the chosen direction, backtrack
-    path.pop_back();
-
+    visited.erase(currentPosition);
     return false;
 }
 
@@ -150,8 +145,6 @@ vector<Move> findPathDFSWrapper(const vector<vector<pair<int, string>>>& graph) 
     vector<Move> path;
 
     if (findPathDFS(graph, 0, 0, rows - 1, cols - 1, visited, path)) {
-        // Reverse the path to get it in the correct order
-        reverse(path.begin(), path.end());
         return path;
     } else {
         cerr << "No path found\n";
@@ -205,6 +198,7 @@ int main() {
         cout << endl;
     }
 
+
     // Mark the initial position as visited
     set<pair<int, int>> visited;
     visited.insert({0, 0});
@@ -213,14 +207,16 @@ int main() {
     vector<Move> path = findPathDFSWrapper(graph);
 
     if (path.empty()) {
+        cerr << "No path found\n";
         return 1;  // Return error code for failure
     }
 
-    // Write path to output file
-    ofstream outputFile("output.txt");
+    // Write path to output
+    cout << "Path: ";
     for (const auto& move : path) {
-        outputFile << move.spaces << move.direction << " ";
+        cout << move.spaces << move.direction << " ";
     }
+    cout << endl;
 
     return 0;
 }
