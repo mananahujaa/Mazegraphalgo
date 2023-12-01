@@ -86,6 +86,7 @@
 
 
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <set>
 #include <algorithm>
@@ -104,7 +105,11 @@ enum Direction {
     UP = 0,
     DOWN = 1,
     LEFT = 2,
-    RIGHT = 3
+    RIGHT = 3,
+    UP_RIGHT = 4,   // Diagonal: North-East (NE)
+    UP_LEFT = 5,    // Diagonal: North-West (NW)
+    DOWN_RIGHT = 6, // Diagonal: South-East (SE)
+    DOWN_LEFT = 7   // Diagonal: South-West (SW)
 };
 
 string getDirectionString(int direction) {
@@ -195,34 +200,48 @@ private:
 };
 
 int main() {
-    // Example maze graph
-    vector<vector<string>> mazeGraph = {
-        {"R-S", "R-S", "R-SE"},
-        {"B-NE", "B-NW", "R-S"},
-        {"B-NE", "B-E", "O"}
-    };
+    // Read maze graph from input.txt
+    ifstream inputFile("input.txt");
+    if (!inputFile.is_open()) {
+        cerr << "Error opening input.txt\n";
+        return 1;
+    }
+
+    vector<vector<string>> mazeGraph;
+    string line;
+    while (getline(inputFile, line)) {
+        vector<string> row;
+        size_t start = 0;
+        size_t end = line.find(' ');
+        while (end != string::npos) {
+            row.push_back(line.substr(start, end - start));
+            start = end + 1;
+            end = line.find(' ', start);
+        }
+        row.push_back(line.substr(start, end));
+        mazeGraph.push_back(row);
+    }
 
     // Create MazeSolver instance
     MazeSolver mazeSolver(mazeGraph);
 
     // Set start and target nodes
     pair<int, int> startNode = {0, 0};
-    pair<int, int> targetNode = {2, 2};
+    pair<int, int> targetNode = {mazeGraph.size() - 1, mazeGraph[0].size() - 1};
 
     // Solve the maze
     vector<Move> path = mazeSolver.solveMaze(startNode, targetNode);
 
     // Display the result
     for (size_t i = 0; i < path.size(); ++i) {
-        string direction = getDirectionString(i % 4);
-        int steps = (i / 4) + 1;
+        string direction = getDirectionString(i % 8);
+        int steps = (i / 8) + 1;
         cout << steps << direction << " ";
     }
     cout << endl;
 
     return 0;
 }
-
 
 
 
