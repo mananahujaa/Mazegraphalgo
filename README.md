@@ -66,7 +66,7 @@ mathematicaCopy code
 
 ## **Author**
 
-[Your Name]
+Manan Ahuja
 
 ```makefile
 makefileCopy code
