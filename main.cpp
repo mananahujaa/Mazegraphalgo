@@ -85,11 +85,33 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////
 #include <iostream>
 #include <fstream>
 #include <vector>
 #include <set>
 #include <algorithm>
+#include <sstream>
 
 using namespace std;
 
@@ -118,6 +140,10 @@ string getDirectionString(int direction) {
         case DOWN: return "N";
         case LEFT: return "W";
         case RIGHT: return "E";
+        case UP_RIGHT: return "NE";
+        case UP_LEFT: return "NW";
+        case DOWN_RIGHT: return "SE";
+        case DOWN_LEFT: return "SW";
         default: return "";
     }
 }
@@ -201,7 +227,7 @@ private:
 
 int main() {
     // Read maze graph from input.txt
-    ifstream inputFile("input.txt");
+    ifstream inputFile("tiny.txt");
     if (!inputFile.is_open()) {
         cerr << "Error opening input.txt\n";
         return 1;
@@ -243,13 +269,7 @@ int main() {
     return 0;
 }
 
-
-
-
-
-
-
-
+/////////////////////////////////////////////////////////////////
 
 
 
